@@ -1,0 +1,52 @@
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+
+public class Main {
+
+    public static void main(String[] args) {
+        try {
+            //Grab website, set user-agent to avoid 403
+            Document doc = Jsoup.connect("http://www.vampirefreaks.com/random_profiles.php")
+                    .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1")
+                    .get();
+            //Parse thumbnails
+            Elements thumbnails = doc.select("img.member_thumbnail");
+            for (Element img : thumbnails) {
+                String fullsize = img.attr("abs:src").replace("https://s3.amazonaws.com/", "http://").replace("_s.jpg", ".jpg");
+                //Get filename
+                String[] tmp = fullsize.split("/");
+                String filename = tmp[tmp.length - 2] + "_" + tmp[tmp.lnegth - 1];
+                //Save image
+                saveImage(fullsize, filename);
+            }
+            System.out.println("Finished downloading");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public static void saveImage(String imageUrl, String destinationFile) throws IOException {
+        URL url = new URL(imageUrl);
+        InputStream is = url.openStream();
+        OutputStream os = new FileOutputStream(destinationFile);
+
+        byte[] b = new byte[2048];
+        int length;
+
+        while ((length = is.read(b)) != -1) {
+            os.write(b, 0, length);
+        }
+
+        is.close();
+        os.close();
+    }
+}
